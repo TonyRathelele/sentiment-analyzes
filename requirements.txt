@@ -8,3 +8,4 @@ keybert
 transformers
 scikit-learn
 seaborn
+ yake
