@@ -8,6 +8,55 @@ from fpdf import FPDF
 import json
 import datetime
 
+# --- Custom CSS for Professional Gradient Background ---
+st.markdown(
+    """
+    <style>
+    /* Gradient background for main app */
+    .stApp {
+        background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%) !important;
+        min-height: 100vh;
+        font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    }
+    /* Card-like look for main blocks */
+    .stMarkdown, .stDataFrame, .stButton, .stTextArea, .stFileUploader, .stRadio, .stDownloadButton, .stSubheader, .stInfo {
+        background: rgba(255,255,255,0.85) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08) !important;
+        padding: 1.2em !important;
+        margin-bottom: 1.2em !important;
+    }
+    /* Sidebar styling */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(135deg, #f8fafc 0%, #e0eafc 100%) !important;
+        border-top-right-radius: 18px;
+        border-bottom-right-radius: 18px;
+        box-shadow: 2px 0 16px rgba(44, 62, 80, 0.06);
+    }
+    /* Title and headers */
+    .stTitle, .stSubheader, .stSidebar .stTitle {
+        color: #2d3a4a !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px;
+    }
+    /* Button styling */
+    .stButton>button {
+        background: linear-gradient(90deg, #4f8cff 0%, #3358e0 100%) !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+        transition: background 0.2s;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(90deg, #3358e0 0%, #4f8cff 100%) !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 df_results = None  # Always use this for display/export
 
 # --- Sidebar ---
@@ -131,15 +180,31 @@ if df_results is not None and not df_results.empty:
     ax[1].set_title('Sentiment Proportion')
     st.pyplot(fig)
 
-    # --- Line Graph: Confidence Scores by Text Index ---
-    st.subheader('Sentiment Confidence by Text')
+    # --- Line Graph: Sentiment on X, Text Index on Y ---
+    st.subheader('Sentiment by Text Index')
+    # Map sentiment to custom numeric values for plotting
+    sentiment_map = {'negative': 0, 'neutral': 1, 'positive': 5}
+    df_results['sentiment_num'] = df_results['sentiment'].map(sentiment_map)
     fig_line, ax_line = plt.subplots(figsize=(8, 4))
-    for sentiment in df_results['sentiment'].unique():
-        subset = df_results[df_results['sentiment'] == sentiment]
-        ax_line.plot(subset.index, subset['confidence'], marker='o', label=sentiment)
+    # Plot a single, thicker, more prominent line connecting all points (text index on x, sentiment on y)
+    ax_line.plot(
+        df_results.index,
+        df_results['sentiment_num'],
+        marker='o',
+        linestyle='-',
+        color='#1a237e',  # deep blue
+        linewidth=3,
+        label='Sentiment Progression'
+    )
+    # Color markers by sentiment
+    colors = df_results['sentiment'].map({'negative': '#e74c3c', 'neutral': '#f1c40f', 'positive': '#2ecc71'})
+    ax_line.scatter(df_results.index, df_results['sentiment_num'], c=colors, s=100, zorder=3, edgecolor='#222', linewidth=1.5, label='Sentiment Dots')
+    # Set y-ticks to new sentiment values and labels
+    ax_line.set_yticks([0, 1, 5])
+    ax_line.set_yticklabels(['Negative', 'Neutral', 'Positive'])
     ax_line.set_xlabel('Text Index')
-    ax_line.set_ylabel('Confidence Score')
-    ax_line.set_title('Sentiment Confidence Across Texts')
+    ax_line.set_ylabel('Sentiment')
+    ax_line.set_title('Sentiment by Text Index')
     ax_line.legend()
     st.pyplot(fig_line)
 
